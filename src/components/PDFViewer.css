@@ -1,0 +1,285 @@
+:root {
+  --viewer-container-height: 0;
+  --pdfViewer-padding-bottom: 0;
+  --page-margin: 1px auto -8px;
+  --page-border: 9px solid transparent;
+  --spreadHorizontalWrapped-margin-LR: -3.5px;
+  --loading-icon-delay: 400ms;
+}
+
+@media screen and (forced-colors: active) {
+  :root {
+    --pdfViewer-padding-bottom: 9px;
+    --page-margin: 8px auto -1px;
+    --page-border: 1px solid CanvasText;
+    --spreadHorizontalWrapped-margin-LR: 3.5px;
+  }
+}
+
+[data-main-rotation="90"] {
+  transform: rotate(90deg) translateY(-100%);
+}
+[data-main-rotation="180"] {
+  transform: rotate(180deg) translate(-100%, -100%);
+}
+[data-main-rotation="270"] {
+  transform: rotate(270deg) translateX(-100%);
+}
+
+#pdfViewerContainer #hiddenCopyElement,
+#pdfViewerContainer .hiddenCanvasElement {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+#pdfViewerContainer .pdfViewer {
+  /* Define this variable here and not in :root to avoid to reflow all the UI
+       when scaling (see #15929). */
+  --scale-factor: 1;
+  --page-bg-color: unset;
+
+  padding-bottom: var(--pdfViewer-padding-bottom);
+
+  --hcm-highlight-filter: none;
+  --hcm-highlight-selected-filter: none;
+
+  @media screen and (forced-colors: active) {
+    --hcm-highlight-filter: invert(100%);
+  }
+
+  &.copyAll {
+    cursor: wait;
+  }
+
+  .canvasWrapper {
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+
+    canvas {
+      margin: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+
+      &[hidden] {
+        display: none;
+      }
+
+      &[zooming] {
+        width: 100%;
+        height: 100%;
+      }
+
+      .structTree {
+        contain: strict;
+      }
+    }
+  }
+}
+
+#pdfViewerContainer .pdfViewer .page {
+  --scale-round-x: 1px;
+  --scale-round-y: 1px;
+
+  direction: ltr;
+  width: 816px;
+  height: 1056px;
+  margin: var(--page-margin);
+  position: relative;
+  overflow: visible;
+  border: var(--page-border);
+  background-clip: content-box;
+  background-color: var(--page-bg-color, rgb(255 255 255));
+}
+
+#pdfViewerContainer .pdfViewer .dummyPage {
+  position: relative;
+  width: 0;
+  height: var(--viewer-container-height);
+}
+
+#pdfViewerContainer .pdfViewer.noUserSelect {
+  user-select: none;
+}
+
+#pdfViewerContainer .pdfViewer.removePageBorders .page {
+  margin: 0 auto 10px;
+  border: none;
+}
+
+#pdfViewerContainer .pdfViewer:is(.scrollHorizontal, .scrollWrapped),
+#pdfViewerContainer .spread {
+  margin-inline: 3.5px;
+  text-align: center;
+}
+
+#pdfViewerContainer .pdfViewer.scrollHorizontal,
+#pdfViewerContainer .spread {
+  white-space: nowrap;
+}
+
+#pdfViewerContainer .pdfViewer.removePageBorders,
+#pdfViewerContainer .pdfViewer:is(.scrollHorizontal, .scrollWrapped) .spread {
+  margin-inline: 0;
+}
+
+#pdfViewerContainer .spread :is(.page, .dummyPage),
+#pdfViewerContainer
+  .pdfViewer:is(.scrollHorizontal, .scrollWrapped)
+  :is(.page, .spread) {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+#pdfViewerContainer .spread .page,
+#pdfViewerContainer .pdfViewer:is(.scrollHorizontal, .scrollWrapped) .page {
+  margin-inline: var(--spreadHorizontalWrapped-margin-LR);
+}
+
+#pdfViewerContainer {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  position: absolute;
+  inset: var(--toolbar-height) 0 0;
+  outline: none;
+}
+
+/* Copyright 2014 Mozilla Foundation
+   *
+   * Licensed under the Apache License, Version 2.0 (the "License");
+   * you may not use this file except in compliance with the License.
+   * You may obtain a copy of the License at
+   *
+   *     http://www.apache.org/licenses/LICENSE-2.0
+   *
+   * Unless required by applicable law or agreed to in writing, software
+   * distributed under the License is distributed on an "AS IS" BASIS,
+   * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   * See the License for the specific language governing permissions and
+   * limitations under the License.
+   */
+
+#pdfViewerContainer .textLayer {
+  position: absolute;
+  text-align: initial;
+  inset: 0;
+  overflow: clip;
+  opacity: 1;
+  line-height: 1;
+  text-size-adjust: none;
+  forced-color-adjust: none;
+  transform-origin: 0 0;
+  caret-color: CanvasText;
+  z-index: 0;
+
+  &.highlighting {
+    touch-action: none;
+  }
+
+  :is(span, br) {
+    color: transparent;
+    position: absolute;
+    white-space: pre;
+    cursor: text;
+    transform-origin: 0% 0%;
+  }
+
+  > :not(.markedContent),
+  .markedContent span:not(.markedContent) {
+    z-index: 1;
+  }
+
+  /* Only necessary in Google Chrome, see issue 14205, and most unfortunately
+     * the problem doesn't show up in "text" reference tests. */
+  /*#if !MOZCENTRAL*/
+  span.markedContent {
+    top: 0;
+    height: 0;
+  }
+  /*#endif*/
+
+  span[role="img"] {
+    user-select: none;
+    cursor: default;
+  }
+
+  .highlight {
+    --highlight-bg-color: rgb(180 0 170 / 0.25);
+    --highlight-selected-bg-color: rgb(0 100 0 / 0.25);
+    --highlight-backdrop-filter: none;
+    --highlight-selected-backdrop-filter: none;
+
+    @media screen and (forced-colors: active) {
+      --highlight-bg-color: transparent;
+      --highlight-selected-bg-color: transparent;
+      --highlight-backdrop-filter: var(--hcm-highlight-filter);
+      --highlight-selected-backdrop-filter: var(
+        --hcm-highlight-selected-filter
+      );
+    }
+
+    margin: -1px;
+    padding: 1px;
+    background-color: var(--highlight-bg-color);
+    backdrop-filter: var(--highlight-backdrop-filter);
+    border-radius: 4px;
+
+    &.appended {
+      position: initial;
+    }
+
+    &.begin {
+      border-radius: 4px 0 0 4px;
+    }
+
+    &.end {
+      border-radius: 0 4px 4px 0;
+    }
+
+    &.middle {
+      border-radius: 0;
+    }
+
+    &.selected {
+      background-color: var(--highlight-selected-bg-color);
+      backdrop-filter: var(--highlight-selected-backdrop-filter);
+    }
+  }
+
+  ::selection {
+    /* stylelint-disable declaration-block-no-duplicate-properties */
+    /*#if !MOZCENTRAL*/
+    background: rgba(0 0 255 / 0.25);
+    /*#endif*/
+    /* stylelint-enable declaration-block-no-duplicate-properties */
+    background: color-mix(in srgb, AccentColor, transparent 75%);
+  }
+
+  /* Avoids https://github.com/mozilla/pdf.js/issues/13840 in Chrome */
+  /*#if !MOZCENTRAL*/
+  br::selection {
+    background: transparent;
+  }
+  /*#endif*/
+
+  .endOfContent {
+    display: block;
+    position: absolute;
+    inset: 100% 0 0;
+    z-index: 0;
+    cursor: default;
+    user-select: none;
+  }
+
+  &.selecting .endOfContent {
+    top: 0;
+  }
+}
