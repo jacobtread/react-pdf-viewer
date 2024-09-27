@@ -33,6 +33,10 @@ export function PDFViewer({ children, document, config }: PDFViewerProps) {
     if (!viewer || !document) return;
 
     viewer.setDocument(document);
+
+    return () => {
+      viewer.clearDocument();
+    };
   }, [viewer, document]);
 
   return (

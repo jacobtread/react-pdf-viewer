@@ -88,7 +88,7 @@ export class PDFViewerApp {
     this.bindEventBus();
   }
 
-  setDocument(pdfDocument: PDFDocumentProxy) {
+  setDocument(pdfDocument: PDFDocumentProxy | null) {
     const pdfViewer = this.pdfViewer;
     pdfViewer.setDocument(pdfDocument);
 
@@ -99,6 +99,12 @@ export class PDFViewerApp {
       this.pdfViewer.currentScaleValue = "page-width";
       this.pdfViewer.update();
     });
+  }
+
+  clearDocument() {
+    const pdfViewer = this.pdfViewer;
+    if (this.pdfViewer.pdfDocument) this.pdfViewer.pdfDocument.destroy();
+    this.pdfViewer.setDocument(null!);
   }
 
   /**
