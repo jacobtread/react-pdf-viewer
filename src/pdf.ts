@@ -88,7 +88,7 @@ export class PDFViewerApp {
     this.bindEventBus();
   }
 
-  setDocument(pdfDocument: PDFDocumentProxy | null) {
+  setDocument(pdfDocument: PDFDocumentProxy) {
     const pdfViewer = this.pdfViewer;
     pdfViewer.setDocument(pdfDocument);
 
